@@ -63,7 +63,7 @@ const LoginForm: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
-    if (error) toast.error(error.toString);
+    if (error) toast.error(error);
   }, [error]);
 
   useEffect(() => {
