@@ -14,8 +14,12 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(to bottom right, #f8fafc, #f1f5f9);
-  /* background: url('/background.jpg') center/cover no-repeat; */
+  background:
+    linear-gradient(to bottom,
+      #e6f4f1 0%,
+      #f1f5f9 60%,
+      transparent 100%),
+    #f8fafc;
 }
 
 h1 {
@@ -24,13 +28,10 @@ h1 {
 }
 
 h2 {
-  font-size: 3.2em;
   margin: 0;
 }
 
-h3 {
-  font-size: 2em;
-  line-height: 1.1;
+p {
   margin: 0;
 }
 

@@ -1,16 +1,21 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMinus, faPlus } from "@fortawesome/free-solid-svg-icons";
-import type { IconProp } from "@fortawesome/fontawesome-svg-core";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getCounts } from "./utils/getCounts";
+import { PulseLoader } from "react-spinners";
+import { updateDataByTitle } from "./firebase";
+import { queryClient } from "./utils/queryClient";
 
 export interface CardProps {
   title: string;
-  icon: IconProp;
+  image: string;
   counter?: number;
 }
 
+const QUERY_KEY = "counts";
+
 export default function Card(props: CardProps) {
-  const { title, icon, counter } = props;
+  const { title, image } = props;
 
   const buttonStyles = {
     border: "none",
@@ -27,47 +32,73 @@ export default function Card(props: CardProps) {
   const removeButtonColor = "#e2e8f0";
   const addButtonColor = "#1e293b";
 
-  const [bounce, setBounce] = useState(false);
+  const { data, isFetching, error, isError, refetch } = useQuery({
+    queryKey: [QUERY_KEY],
+    queryFn: getCounts,
+  });
 
-  useEffect(() => {
-    const triggerBounce = () => {
-      setBounce(true);
-      setTimeout(() => setBounce(false), 600); // match animation duration
-    };
+  const item = data?.find((item) => item.title == title);
+  const counter = item?.count ?? 0;
+  const timestamp = item?.lastTimestamp ?? new Date();
+  const daysSince = Math.floor((new Date().getTime() - new Date(timestamp).getTime()) / (1000 * 60 * 60 * 24));
 
-    const scheduleNext = () => {
-      const randomTime = Math.random() * 8000 + 1000; // 1000ms → 9000ms
-      setTimeout(() => {
-        triggerBounce();
-        scheduleNext(); // schedule next bounce
-      }, randomTime);
-    };
+  const updateData = (value: number) => {
+    updateDataByTitle(title, value).then(() => {
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+      refetch();
+    });
+  };
 
-    scheduleNext();
-  }, []);
+  if (isError) console.log(error);
 
   return (
     <div
       style={{
         display: "flex",
         backgroundColor: "white",
-        flexDirection: "column",
         alignItems: "center",
-        padding: "64px 32px",
+        padding: "16px",
         borderRadius: "8px",
         boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
+        justifyContent: "space-between",
       }}
     >
-      <FontAwesomeIcon icon={icon} size="4x" className={bounce ? "bounce" : ""} />
-      <h3 style={{ margin: "10px" }}>{title}</h3>
-      {counter && (
-        <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-          <button style={{ ...buttonStyles, backgroundColor: removeButtonColor }}>
-            <FontAwesomeIcon icon={faMinus} />
-          </button>
-          <h2>{counter}</h2>
-          <button style={{ ...buttonStyles, backgroundColor: addButtonColor }}>
+      <div style={{ display: "flex", gap: "12px" }}>
+        <img src={image} alt="Osmow's" style={{ height: "100%", width: "70px", borderRadius: "8px" }} />
+        <div>
+          <h2>{title}</h2>
+          {isError && <p>Error occurred while loading data.</p>}
+          {data && !isFetching && (
+            <p>
+              Count: {counter} • Days since: {daysSince}
+            </p>
+          )}
+          {isFetching && (
+            <div style={{ marginTop: "10px" }}>
+              <PulseLoader color={"rgba(54, 196, 215, 1)"} speedMultiplier={0.75} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {data && !isFetching && (
+        <div style={{ display: "flex", gap: "8px", flexDirection: "column", alignItems: "center" }}>
+          <button
+            style={{ ...buttonStyles, backgroundColor: addButtonColor }}
+            onClick={() => {
+              updateData(1);
+            }}
+          >
             <FontAwesomeIcon icon={faPlus} color="white" />
+          </button>
+          <button
+            style={{ ...buttonStyles, backgroundColor: removeButtonColor }}
+            disabled={counter <= 0}
+            onClick={() => {
+              updateData(-1);
+            }}
+          >
+            <FontAwesomeIcon icon={faMinus} />
           </button>
         </div>
       )}

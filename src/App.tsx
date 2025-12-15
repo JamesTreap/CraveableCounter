@@ -1,38 +1,57 @@
-import { faBowlRice, faBurger, faMugHot } from "@fortawesome/free-solid-svg-icons";
 import "./App.css";
 import type { CardProps } from "./Card";
 import Card from "./Card";
-import { Divider } from "./Divider";
-import PulsatingBackground from "./PulsatingBackground";
+import osmows from "/osmows.png";
+import craveable from "/craveable.png";
+import hotchocolate from "/hotchocolate.png";
+import { QueryClientProvider } from "@tanstack/react-query";
+import LoginForm from "./loginForm";
+import { queryClient } from "./utils/queryClient";
+import { ToastContainer } from "react-toastify";
+import { useState } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBars, faXmark } from "@fortawesome/free-solid-svg-icons";
 
 function App() {
+  const [loggingIn, setLoggingIn] = useState(false);
+
+  const handleClick = () => {
+    setLoggingIn((prevState) => !prevState);
+  };
+
   const items: CardProps[] = [
-    { title: "Craveables", icon: faBurger, counter: 5 },
-    { title: "Osmows", icon: faBowlRice, counter: 1 },
-    { title: "Hot Chocolate", icon: faMugHot, counter: 10 },
+    { title: "Craveable", image: craveable },
+    { title: "Osmows", image: osmows },
+    { title: "Hot Chocolate", image: hotchocolate },
   ];
 
   return (
-    <>
-      <PulsatingBackground />
-
-      <div style={{ marginBottom: "80px", maxWidth: "1280px", margin: "auto" }}>
-        <h1>Carrot's Craveable Counter</h1>
-        <Divider />
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(3, 1fr)",
-            gap: "16px",
-          }}
-        >
-          {items.map((item) => (
-            <Card {...item} />
-          ))}
+    <QueryClientProvider client={queryClient}>
+      <ToastContainer position="top-right" closeOnClick />
+      <div style={{ marginBottom: "100px", maxWidth: "600px", margin: "0 auto 60px auto" }}>
+        <div style={{ display: "flex", justifyContent: "right" }}>
+          {loggingIn && <FontAwesomeIcon icon={faXmark} onClick={handleClick} size="2x" />}
+          {!loggingIn && <FontAwesomeIcon icon={faBars} onClick={handleClick} size="2x" />}
         </div>
-        <Divider />
+
+        {loggingIn && <LoginForm />}
+        {!loggingIn && (
+          <>
+            <h1 style={{ textAlign: "center" }}>Carrot's Craveable Counter</h1>
+            <div
+              style={{
+                display: "grid",
+                gap: "16px",
+              }}
+            >
+              {items.map((item) => (
+                <Card {...item} key={item.title} />
+              ))}
+            </div>
+          </>
+        )}
       </div>
-    </>
+    </QueryClientProvider>
   );
 }
 
